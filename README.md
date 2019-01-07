@@ -1,5 +1,7 @@
 # Dependencies
 [SFML.](https://www.sfml-dev.org/)
+
+C++11 compiler
 # Example with 200 particles
 ![](https://media.giphy.com/media/oOGfurkvE76978KUPm/giphy.gif)
 
