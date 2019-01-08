@@ -71,7 +71,7 @@ int main()
       }
       // If snowflake is below screen then reset it so that it is above the screen, and reset the associated tween.
       positions[i] += 1/tweens[i].duration;
-      if (positions[i] > window.getSize().y + defaultRadius*2)
+      if (positions[i] > window.getSize().y)
       {
         positions[i] = -defaultRadius*2;
         tweens[i].begin = randomBetween(0, window.getSize().x);
