@@ -7,5 +7,5 @@ C++11 compiler
 
 *Low framerate is due to GIF conversion, the actual animation should be 60fps*
 
-# Smother example
+# Smoother example
 https://youtu.be/6rWvmGFZ8k4
