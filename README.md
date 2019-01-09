@@ -6,3 +6,6 @@ C++11 compiler
 ![](https://media.giphy.com/media/oOGfurkvE76978KUPm/giphy.gif)
 
 *Low framerate is due to GIF conversion, the actual animation should be 60fps*
+
+# Smother example
+https://youtu.be/6rWvmGFZ8k4
