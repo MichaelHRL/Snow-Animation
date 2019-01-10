@@ -17,25 +17,28 @@ struct Tween
   float change;
   float time{0};
   float duration;
+  float current() const
+  {
+    return begin + change*easeInOutQuad(time/duration);
+  }
 };
-
-float current(Tween const & t)
-{
-  return t.begin + t.change*easeInOutQuad(t.time/t.duration);
-}
 
 int main()
 {
   sf::RenderWindow window{sf::VideoMode{500, 500}, "Snow"};
   auto const inverseFramerate = 1.f/60;
   window.setFramerateLimit(static_cast<unsigned>(1/inverseFramerate));
-  auto distribution = std::normal_distribution<float>{0.f, 1.f};
-  auto generator = std::mt19937{};
   auto const numberOfSnowflakes = 200;
   Tween tweens[numberOfSnowflakes];
-  float positions[numberOfSnowflakes];
-  auto const changeInX = 10.f;
-  // Returns a random number in the range [min..max).
+  float yPositions[numberOfSnowflakes];
+  auto generator = std::mt19937{};
+  // Returns a normally distributed random number.
+  auto randomChangeInX = [&generator]()
+  {
+    static auto distribution = std::normal_distribution<float>{0.f, 10.f};
+    return distribution(generator);
+  };
+  // Returns a uniformly distributed random number in the range [min..max).
   auto randomBetween = [&generator](float min, float max)
   {
     return std::generate_canonical<float, 10>(generator)*(max - min) + min;
@@ -43,9 +46,9 @@ int main()
   for (auto i = 0; i < numberOfSnowflakes; ++i)
   {             
     tweens[i].begin = randomBetween(0, window.getSize().x);
-    tweens[i].change = changeInX*distribution(generator);
+    tweens[i].change = randomChangeInX();
     tweens[i].duration = randomBetween(1, 5); 
-    positions[i] = randomBetween(-20, window.getSize().y);
+    yPositions[i] = randomBetween(-20, window.getSize().y);
   }
   auto const defaultRadius = 5.f;
   auto circle = sf::CircleShape{};
@@ -62,27 +65,26 @@ int main()
     for (auto i = 0; i < numberOfSnowflakes; ++i)
     {
       tweens[i].time += inverseFramerate;
-      // If tween finished then reset it so that it continues to another end-point.
       if (tweens[i].time > tweens[i].duration)
       {
         tweens[i].begin += tweens[i].change;
-        tweens[i].change = changeInX*distribution(generator);
+        tweens[i].change = randomChangeInX();
         tweens[i].time = 0;
       }
-      // If snowflake is below screen then reset it so that it is above the screen, and reset the associated tween.
-      positions[i] += 1/tweens[i].duration;
-      if (positions[i] > window.getSize().y)
+
+      yPositions[i] += 1/tweens[i].duration;
+      if (yPositions[i] > window.getSize().y)
       {
-        positions[i] = -defaultRadius*2;
+        yPositions[i] = -defaultRadius*2;
         tweens[i].begin = randomBetween(0, window.getSize().x);
-        tweens[i].change = changeInX*distribution(generator);
+        tweens[i].change = randomChangeInX();
         tweens[i].time = 0;
       }
     }
     window.clear();
     for (auto i = 0; i < numberOfSnowflakes; ++i)
     {
-      circle.setPosition(current(tweens[i]), positions[i]);
+      circle.setPosition(tweens[i].current(), yPositions[i]);
       circle.setRadius(defaultRadius/tweens[i].duration);
       window.draw(circle);      
     }
