@@ -1,27 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <random>
-
-// Maps input in the range [0..1] to an output in the range [0..1].
-// Represents the piecewise function:
-// y(x) = 2*x^2             when x < 0.5
-//      = -2*x^2 + 4*t - 1  when x >= 0.5
-auto ease_in_out_quad(float const x)
-{
-	return x < 0.5 ? 2*x*x : 2*x*(2 - x) - 1;
-}
-
-struct Tween
-{
-  float begin;
-  float change;
-  float time{0};
-  float duration;
-};
-
-float current(Tween const & t)
-{
-  return t.begin + t.change*ease_in_out_quad(t.time/t.duration);
-}
+#include <vector>
 
 namespace random
 {
@@ -36,62 +15,90 @@ namespace random
 	}
 };
 
+struct Snowflake
+{
+	float start;
+	float end;
+	float elapsed_time;
+	float duration;
+	sf::CircleShape shape;
+};
+
+auto current(Snowflake const & s)
+{
+	static auto f = [](float x){return x < 0.5 ? 2*x*x : 2*x*(2 - x) - 1;};
+	return s.start + (s.end - s.start)*f(s.elapsed_time/s.duration);
+}
+
+auto create_snowflake(sf::RenderWindow const & window, float const max_radius, float const change_in_x)
+{
+	auto const a = random::uniform(0, window.getSize().x);
+	auto const b = a + change_in_x*random::normal();
+	auto const d = random::uniform(1, 5);
+	auto const t = random::uniform(0, d); 
+	auto c = sf::CircleShape{max_radius/d};
+	c.setPosition(a, random::uniform(-20, window.getSize().y));
+	return Snowflake{a, b, t, d, c}; 
+}
+
+auto update_snowflake(Snowflake & s, sf::RenderWindow const & window, float const framerate, float const max_radius, float const change_in_x)
+{
+	s.elapsed_time += 1/framerate;
+	if (s.elapsed_time > s.duration)
+	{
+		s.start = s.end;
+		s.end += change_in_x*random::normal();
+		s.elapsed_time = 0;
+	}
+	s.shape.setPosition(s.shape.getPosition().x, s.shape.getPosition().y + 1/s.duration);
+	if (s.shape.getPosition().y > window.getSize().y)
+	{
+		s.shape.setPosition(s.shape.getPosition().x, -2*max_radius);
+		s.start = random::uniform(0, window.getSize().x);
+		s.end = s.start + change_in_x*random::normal();
+		s.elapsed_time = 0;
+	}
+	s.shape.setPosition(current(s), s.shape.getPosition().y);
+}
+
+auto draw_snowflake(Snowflake const & s, sf::RenderWindow & w)
+{
+	w.draw(s.shape);
+}
+
 int main()
 {
-  sf::RenderWindow window{sf::VideoMode{500, 500}, "Snow"};
-  auto const inverseFramerate = 1.f/60;
-  window.setFramerateLimit(static_cast<unsigned>(1/inverseFramerate));
-  auto const numberOfSnowflakes = 200;
-  Tween tweens[numberOfSnowflakes];
-  float positions[numberOfSnowflakes];
-  auto const changeInX = 10.f;
-  // Returns a random number in the range [min..max).
-  for (auto i = 0; i < numberOfSnowflakes; ++i)
-  {             
-    tweens[i].begin = random::uniform(0, window.getSize().x);
-    tweens[i].change = changeInX*random::normal();
-    tweens[i].duration = random::uniform(1, 5);
-    positions[i] = random::uniform(-20, window.getSize().y);
-  }
-  auto const defaultRadius = 5.f;
-  auto circle = sf::CircleShape{};
-  while (window.isOpen())
-  {
-    auto event = sf::Event{};
-    while (window.pollEvent(event))
-    {
-      if (event.type == sf::Event::Closed)
-      {
-        window.close();
-      }
-    }
-    for (auto i = 0; i < numberOfSnowflakes; ++i)
-    {
-      tweens[i].time += inverseFramerate;
-      // If tween finished then reset it so that it continues to another end-point.
-      if (tweens[i].time > tweens[i].duration)
-      {
-        tweens[i].begin += tweens[i].change;
-        tweens[i].change = changeInX*random::normal();
-        tweens[i].time = 0;
-      }
-      // If snowflake is below screen then reset it so that it is above the screen, and reset the associated tween.
-      positions[i] += 1/tweens[i].duration;
-      if (positions[i] > window.getSize().y)
-      {
-        positions[i] = -defaultRadius*2;
-        tweens[i].begin = random::uniform(0, window.getSize().x);
-        tweens[i].change = changeInX*random::normal();
-        tweens[i].time = 0;
-      }
-    }
-    window.clear();
-    for (auto i = 0; i < numberOfSnowflakes; ++i)
-    {
-      circle.setPosition(current(tweens[i]), positions[i]);
-      circle.setRadius(defaultRadius/tweens[i].duration);
-      window.draw(circle);      
-    }
-    window.display();
-  }
+	sf::RenderWindow window{sf::VideoMode{500, 500}, "Snow"};
+	auto constexpr framerate = 60.f;
+	window.setFramerateLimit(framerate);
+	auto constexpr numberOfSnowflakes = 200;
+	auto constexpr change_in_x = 10.f;
+	auto constexpr max_radius = 5.f;
+	auto snowflakes = std::vector<Snowflake>{};
+	for (auto i = 0; i < numberOfSnowflakes; ++i)
+	{
+		snowflakes.push_back(create_snowflake(window, max_radius, change_in_x));
+	}
+	while (window.isOpen())
+	{
+		auto event = sf::Event{};
+		while (window.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+			{
+				window.close();
+			}
+		}
+
+		for (auto i = 0; i < numberOfSnowflakes; ++i)
+		{
+			update_snowflake(snowflakes[i], window, framerate, max_radius, change_in_x);
+		}
+		window.clear();
+		for (auto i = 0; i < numberOfSnowflakes; ++i)
+		{
+			draw_snowflake(snowflakes[i], window);
+		}
+		window.display();
+	}
 }
