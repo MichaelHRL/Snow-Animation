@@ -70,7 +70,7 @@ auto draw_snowflake(Snowflake const & s, sf::RenderWindow & w)
 int main()
 {
 	sf::RenderWindow window{sf::VideoMode{500, 500}, "Snow"};
-	auto constexpr framerate = 60.f;
+	auto constexpr framerate = 260.f;
 	window.setFramerateLimit(framerate);
 	auto constexpr numberOfSnowflakes = 200;
 	auto constexpr change_in_x = 10.f;
