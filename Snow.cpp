@@ -21,7 +21,7 @@ struct Snowflake
 	float end;
 	float elapsed_time;
 	float duration;
-	sf::CircleShape shape;
+	sf::CircleShape shape{1};
 };
 
 auto current(Snowflake const & s)
@@ -32,13 +32,14 @@ auto current(Snowflake const & s)
 
 auto create_snowflake(sf::RenderWindow const & window, float const max_radius, float const change_in_x)
 {
-	auto const a = random::uniform(0, window.getSize().x);
-	auto const b = a + change_in_x*random::normal();
-	auto const d = random::uniform(1, 5);
-	auto const t = random::uniform(0, d); 
-	auto c = sf::CircleShape{max_radius/d};
-	c.setPosition(a, random::uniform(-20, window.getSize().y));
-	return Snowflake{a, b, t, d, c}; 
+	auto s = Snowflake{};
+	s.start = random::uniform(0, window.getSize().x);
+	s.end = s.start + change_in_x*random::normal();
+	s.duration = random::uniform(1, 5);
+	s.elapsed_time = random::uniform(0, s.duration); 
+	s.shape.setRadius(max_radius/s.duration);
+	s.shape.setPosition(s.start, random::uniform(-2*max_radius, window.getSize().y));
+	return s;
 }
 
 auto update_snowflake(Snowflake & s, sf::RenderWindow const & window, float const framerate, float const max_radius, float const change_in_x)
