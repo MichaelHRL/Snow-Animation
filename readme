@@ -6,7 +6,7 @@ C++17 compiler
 SFML 2.5.1
 
 --Building--
-This program uses SFML so it needs access to its headers and binaries. For example, here is part of my bash build script: g++ -std=c++17 -Wall -Wextra -Werror -L$sfml_bin_path -I$sfml_include_path -lsfml-graphics-2 -lsfml-window-2 -lsfml-system-2 $source_files -o app
+This program uses SFML (for graphics, sound, window management, etc) so it needs access to SFML's headers and binaries (e.g. .dll files for dynamic linking on windows). Here is an example of how to compile and link the program and libraries (an excerpt taken from my Bash script): g++ -std=c++17 -Wall -Wextra -Werror -L$sfml_bin_path -I$sfml_include_path -lsfml-graphics-2 -lsfml-window-2 -lsfml-system-2 $source_files -o app
 
 --Running--
-If you're using SFML in it's shared library form, then you'll need to make those binaries accessible to the program during runtime. This can be done either by copying those libaries into the same directory as the program or (in my case) temporarily adding the binaries' path to the system path while running the program. Afterwards, simply execute the executable, e.g. ./app.
+If you built the program by statically linking it to SFML's binaries then all you have to do is execute the executable (e.g. './app'). On the other hand, if you built it with dynamic linking in mind then you'll have to make the SFML binaries (e.g. .dll files on windows) accessible to the program, either by copying/moving them into the same folder as the program's executable, or (and this is the way I did it) by temporarily adding the path of the SFML binaries to the system path while the program is run (in my case, via a Bash script).
